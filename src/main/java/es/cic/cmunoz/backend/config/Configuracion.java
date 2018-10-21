@@ -15,10 +15,16 @@
  */
 package es.cic.cmunoz.backend.config;
 
+import es.cic.cmunoz.backend.job.CreadorJobs;
 import es.cic.cmunoz.backend.repository.SqliteRepository;
 import es.cic.cmunoz.backend.repository.SqliteRepositoryImpl;
+
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -26,15 +32,24 @@ import org.springframework.context.annotation.Configuration;
  * @author cmunoz
  */
 @Configuration
+@ComponentScan("es.cic.cmunoz")
 public class Configuracion {
 
     @Bean(name="paramJob")
-    public HashMap<String,String> listParamJob() {
-        return new HashMap<>();
+    public Map<String,String> listParamJob() {
+        return Collections.emptyMap();
     }
     
-    @Bean(name="repository")
+    @Bean
     public SqliteRepository sqliteRepository(){
         return new SqliteRepositoryImpl();
     }
+    
+    @Bean(name="CreadorJobs")
+    public CreadorJobs creadorJobs() {
+    	CreadorJobs creadorJobs = new CreadorJobs();
+		return creadorJobs;
+    }
+    
+    
 }

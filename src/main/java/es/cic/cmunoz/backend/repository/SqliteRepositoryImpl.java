@@ -15,6 +15,8 @@
  */
 package es.cic.cmunoz.backend.repository;
 
+import static org.apache.log4j.Logger.getLogger;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -26,13 +28,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import org.apache.log4j.Logger;
-import static org.apache.log4j.Logger.getLogger;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 
-@Component
-@Primary
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Repository;
+
+@Repository
 public class SqliteRepositoryImpl implements SqliteRepository {
 
     private static final Logger LOG = getLogger(SqliteRepositoryImpl.class.getName());

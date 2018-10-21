@@ -21,11 +21,7 @@ import java.util.Objects;
 
 public class Mapeado {
 
-    private Map<String, String> mapaCadenas;
-
-    public Mapeado() {
-        mapaCadenas = new HashMap<>();
-    }
+    private Map<String, String> mapaCadenas = new HashMap<>();
 
     public Map<String, String> getMapaCadenas() {
         return mapaCadenas;
@@ -33,31 +29,6 @@ public class Mapeado {
 
     public void setMapaCadenas(Map<String, String> mapaCadenas) {
         this.mapaCadenas = mapaCadenas;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 79 * hash + Objects.hashCode(this.mapaCadenas);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Mapeado other = (Mapeado) obj;
-        if (!Objects.equals(this.mapaCadenas, other.mapaCadenas)) {
-            return false;
-        }
-        return true;
     }
 
     @Override

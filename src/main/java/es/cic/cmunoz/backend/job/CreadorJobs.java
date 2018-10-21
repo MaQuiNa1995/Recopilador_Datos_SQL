@@ -15,7 +15,8 @@
  */
 package es.cic.cmunoz.backend.job;
 
-import es.cic.cmunoz.backend.config.ApplicationContextProvider;
+import static org.apache.log4j.Logger.getLogger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,8 +27,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.log4j.Logger;
-import static org.apache.log4j.Logger.getLogger;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
@@ -35,12 +36,15 @@ import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.context.support.AbstractApplicationContext;
-import static org.apache.log4j.Logger.getLogger;
+import org.springframework.stereotype.Component;
+
+import es.cic.cmunoz.backend.config.ApplicationContextProvider;
 
 /**
  * Clase encargada de la creación de jobs
  * @author cmunoz
  */
+@Component
 public class CreadorJobs {
 
     private static final Logger LOG = getLogger(CreadorJobs.class.getName());
@@ -52,9 +56,9 @@ public class CreadorJobs {
 
     /**
      * Método usado para la creación de un job
+     * @param listaMapasParams 
      */
-    @SuppressWarnings("unchecked")
-    public void crearJob() {
+    public void crearJob(Map<String, String> listaMapasParams) {
 
         context = ApplicationContextProvider.getApplicationContext();
         Job job = (Job) context.getBean("consultaResultJob");
@@ -63,16 +67,15 @@ public class CreadorJobs {
 
         boolean exito = true;
 
-        JobParameters parametros = null;
         execution = null;
 
         LOG.info("Creando Job: " + job.getName());
 
-        parametros = crearParametrosJob(mapaParams);
+        JobParameters parametros = crearParametrosJob(listaMapasParams);
 
         LOG.info("Pasando Parámetros Al Job");
 
-        if (parametros == null) {
+        if (listaMapasParams == null) {
             LOG.info("No Se pudo Ejecutar El Job Debido A Que No Hay Definida Ninguna Consulta");
         } else {
 
@@ -103,8 +106,7 @@ public class CreadorJobs {
      * select
      * @return Hashmap que contiene los parámetros del job
      */
-    private JobParameters crearParametrosJob(HashMap<String, String> mapa) {
-        JobParameters jobParametros;
+    private JobParameters crearParametrosJob(Map<String, String> mapa) {
 
         String carpetaHoy = crearCarpeta();
 
@@ -129,7 +131,7 @@ public class CreadorJobs {
         mapaParametros.put("consulta", paramConsulta);
         mapaParametros.put("destino", paramDestino);
 
-        jobParametros = new JobParameters(mapaParametros);
+        JobParameters jobParametros = new JobParameters(mapaParametros);
 
         return jobParametros;
     }
@@ -174,7 +176,8 @@ public class CreadorJobs {
      *
      * @return Hashmap que contiene el mapa que guardamos previamente
      */
-    private HashMap<String, String> deserializarLista() {
+    @SuppressWarnings("unchecked")
+	private HashMap<String, String> deserializarLista() {
 
         final String FICHERO_NOMBRE = "hashmap.ser";
 
@@ -184,7 +187,7 @@ public class CreadorJobs {
         try (FileInputStream fos = new FileInputStream(FICHERO_NOMBRE);
                 ObjectInputStream ois = new ObjectInputStream(fos)) {
             LOG.info("Objeto Deserializado Con Éxito");
-            mapaParams = (HashMap) ois.readObject();
+            mapaParams = (HashMap<String, String>) ois.readObject();
         } catch (FileNotFoundException ex) {
             LOG.info("Archivo No Encontrado, Razón ".concat(ex.getMessage()));
         } catch (IOException ex) {

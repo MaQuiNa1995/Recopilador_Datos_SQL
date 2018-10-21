@@ -39,7 +39,7 @@ public class MyApplicationProperties {
         configuration.setReloadingStrategy(new FileChangedReloadingStrategy());
     }
 
-    public static synchronized String getProperty(final String key) {
+    public static synchronized String getProperty(String key) {
         return (String) configuration.getProperty(key);
     }
 }

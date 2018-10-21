@@ -1,9 +1,9 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:batch="http://www.springframework.org/schema/batch"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:task="http://www.springframework.org/schema/task"
-       xsi:schemaLocation="http://www.springframework.org/schema/batch
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/batch
                            http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
                            http://www.springframework.org/schema/task
                            http://www.springframework.org/schema/task/spring-task-3.0.xsd
@@ -11,179 +11,163 @@
                            http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
                            http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context-3.2.xsd">
-    
-    <context:annotation-config/>
 
-    <context:component-scan base-package="es.cic.cmunoz">
-    </context:component-scan>
-    
-    <task:annotation-driven/>
-    
-    <bean class="org.springframework.batch.core.scope.StepScope"/>
+	<context:annotation-config />
 
-    <bean id="parametrosJob"
-          class="java.util.HashMap">
-    </bean>
-    
-    <!-- JobRepository and JobLauncher are configuration/setup classes -->
-    <bean id="jobRepository"
-          class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean" />
+	<context:component-scan
+		base-package="es.cic.cmunoz">
+	</context:component-scan>
 
-    <bean id="jobLauncher"
-          class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
-        <property name="jobRepository"
-                  ref="jobRepository" />
-        <property name="taskExecutor"
-                  ref="ejecutorTask" />
-    </bean>
+	<task:annotation-driven />
 
-    <bean id="ejecutorTask" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-        <property name="corePoolSize" value="${sql.pool.hilos}" />
-        <property name="maxPoolSize" value="${sql.maximo.hilos}" />
-        <property name="queueCapacity" value="${sql.capacidad.hilos}" />
-    </bean>
+	<bean class="org.springframework.batch.core.scope.StepScope" />
 
-    <bean id="propertyConfigurer"
-          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="ignoreUnresolvablePlaceholders"
-                  value="false"/>
-        <property name="locations">
-            <list>
-                <value>classpath*:/application.properties</value>
-                <value>file:configuracionBBDD.properties</value>
-                <!--<value>file:C:\configuracionBBDD.properties</value>-->
-            </list>
-        </property>
-    </bean>
-    
-    
-    
-    <!-- ItemReader which reads from database and returns the row mapped by 
-    rowMapper -->
-    <bean id="databaseItemReader"
-          class="org.springframework.batch.item.database.JdbcCursorItemReader"
-          scope="step">
- 
-        <property name="dataSource"
-                  ref="dataSource" />
- 
-        <property name="sql"
-                  value="#{jobParameters['consulta']}" />
- 
-        <!--value="#{jobParameters['consulta']}"-->
-        
-        <property name="rowMapper">
-            <bean class="es.cic.cmunoz.backend.batching.MapeadoRowMapper">
-                <property name="select"
-                          value="#{jobParameters['select']}" />
-            </bean>
-        </property>
- 
-    </bean>
-    
-    <!-- ItemWriter writes a line into output flat file -->
-    <bean id="flatFileItemWriter"
-          class="org.springframework.batch.item.file.FlatFileItemWriter"
-          scope="step">
+	<bean id="parametrosJob" class="java.util.HashMap">
+	</bean>
 
-        <property name="resource"
-                  value="file:#{jobParameters['destino']}" />
+	<!-- JobRepository and JobLauncher are configuration/setup classes -->
+	<bean id="jobRepository"
+		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean" />
 
-        <property name="lineAggregator">
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+		<property name="taskExecutor" ref="ejecutorTask" />
+	</bean>
 
-            <!-- An Aggregator which converts an object into delimited list of strings -->
-            <bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+	<bean id="ejecutorTask"
+		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+		<property name="corePoolSize" value="${sql.pool.hilos}" />
+		<property name="maxPoolSize" value="${sql.maximo.hilos}" />
+		<property name="queueCapacity" value="${sql.capacidad.hilos}" />
+	</bean>
 
-                <property name="delimiter" value="," />
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="false" />
+		<property name="locations">
+			<list>
+				<value>classpath*:/application.properties</value>
+				<value>file:configuracionBBDD.properties</value>
+				<!--<value>file:C:\configuracionBBDD.properties</value> -->
+			</list>
+		</property>
+	</bean>
 
-                <property name="fieldExtractor">
 
-                    <!-- Extractor which returns the value of beans property through reflection -->
-                    <bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
-                        <property name="names"
-                                  value="mapaCadenas" />
-                    </bean>
-                </property>
-            </bean>
-        </property>
-    </bean>
 
-    <!-- Optional JobExecutionListener to perform business logic before and after the job -->
-    <bean id="jobListener"
-          class="es.cic.cmunoz.backend.batching.MapeadoJobListener" />
+	<!-- ItemReader which reads from database and returns the row mapped by 
+		rowMapper -->
+	<bean id="databaseItemReader"
+		class="org.springframework.batch.item.database.JdbcCursorItemReader"
+		scope="step">
 
-    <!-- Optional ItemProcessor to perform business logic/filtering on the input records -->
-    <bean id="itemProcessor"
-          class="es.cic.cmunoz.backend.batching.MapeadoItemProcessor" />
+		<property name="dataSource" ref="dataSource" />
 
-    <!-- Step will need a transaction manager -->
-    <bean id="transactionManager"
-          class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+		<property name="sql" value="#{jobParameters['consulta']}" />
 
-    <batch:job id="consultaResultJob">
-        <batch:step id="StepOne">
-            <batch:tasklet transaction-manager="transactionManager">
-                <batch:chunk reader="databaseItemReader"
-                             writer="flatFileItemWriter"
-                             processor="itemProcessor"
-                             commit-interval="${sql.commit}"/>
-            </batch:tasklet>
-        </batch:step>
-        <batch:listeners>
-            <batch:listener ref="jobListener" />
-        </batch:listeners>
-    </batch:job>
-    
+		<!--value="#{jobParameters['consulta']}" -->
 
-    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-        <!--Base Datos Custom-->
-        <property name="driverClassName" value="${basedatos.driver}" />
-        <property name="url" value="${basedatos.url}" />
-        <property name="username" value="${basedatos.user}" />
-        <property name="password" value="${basedatos.pass}" />
-        
-    </bean>
+		<property name="rowMapper">
+			<bean class="es.cic.cmunoz.backend.batching.MapeadoRowMapper">
+				<property name="select" value="#{jobParameters['select']}" />
+			</bean>
+		</property>
 
-    <bean id="log4jInitialization"
-        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-        <property name="targetClass" value="org.springframework.util.Log4jConfigurer" />
-        <property name="targetMethod" value="initLogging" />
-        <property name="arguments">
-            <list>
-                <value>classpath:log4.properties</value>
-            </list>
-        </property>
-    </bean>
+	</bean>
+
+	<!-- ItemWriter writes a line into output flat file -->
+	<bean id="flatFileItemWriter"
+		class="org.springframework.batch.item.file.FlatFileItemWriter"
+		scope="step">
+
+		<property name="resource"
+			value="file:#{jobParameters['destino']}" />
+
+		<property name="lineAggregator">
+
+			<!-- An Aggregator which converts an object into delimited list of strings -->
+			<bean
+				class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+
+				<property name="delimiter" value="," />
+
+				<property name="fieldExtractor">
+
+					<!-- Extractor which returns the value of beans property through reflection -->
+					<bean
+						class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+						<property name="names" value="mapaCadenas" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+	<!-- Optional JobExecutionListener to perform business logic before and 
+		after the job -->
+	<bean id="jobListener"
+		class="es.cic.cmunoz.backend.batching.MapeadoJobListener" />
+
+	<!-- Optional ItemProcessor to perform business logic/filtering on the input 
+		records -->
+	<bean id="itemProcessor"
+		class="es.cic.cmunoz.backend.batching.MapeadoItemProcessor" />
+
+	<!-- Step will need a transaction manager -->
+	<bean id="transactionManager"
+		class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+
+	<batch:job id="consultaResultJob">
+		<batch:step id="StepOne">
+			<batch:tasklet transaction-manager="transactionManager">
+				<batch:chunk reader="databaseItemReader"
+					writer="flatFileItemWriter" processor="itemProcessor"
+					commit-interval="${sql.commit}" />
+			</batch:tasklet>
+		</batch:step>
+		<batch:listeners>
+			<batch:listener ref="jobListener" />
+		</batch:listeners>
+	</batch:job>
+
+
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<!--Base Datos Custom -->
+		<property name="driverClassName" value="${basedatos.driver}" />
+		<property name="url" value="${basedatos.url}" />
+		<property name="username" value="${basedatos.user}" />
+		<property name="password" value="${basedatos.pass}" />
+
+	</bean>
+
+	<bean id="log4jInitialization"
+		class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetClass"
+			value="org.springframework.util.Log4jConfigurer" />
+		<property name="targetMethod" value="initLogging" />
+		<property name="arguments">
+			<list>
+				<value>classpath:log4.properties</value>
+			</list>
+		</property>
+	</bean>
 </beans>
 
-<!--__________________________Reader con Paginacion_________________________________-->
-<!--    <bean id="databaseItemReader"
-              class="org.springframework.batch.item.database.JdbcPagingItemReader" scope="step">
-    <property name="dataSource"
-              ref="dataSource" />
-    <property name="queryProvider">
-        <bean class="org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean">
-            <property name="dataSource" ref="dataSource" />
-            <property name="databaseType" value="MySQL" />
-            <property name="selectClause" value="SELECT #{jobParameters['select']}" />
-            <property name="fromClause" value="FROM #{jobParameters['from']}" /> 
-            <property name="whereClause" value="WHERE #{jobParameters['where']}"/>
-            <property name="sortKey" value="#{jobParameters['orderBy']}" />
-        </bean>
-    </property>
-    <property name="pageSize"
-              value="#{jobParameters['paginacion']}" />
-    <property name="rowMapper">
-        <bean class="es.cic.cmunoz.backend.batching.MapeadoRowMapper" />
-    </property>
-</bean>-->
-                
-<!--
-<bean id="jobLauncher"class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
-<property name="jobRepository" ref="jobRepository" />
-<property name="taskExecutor" ref="taskExecutor" />
-</bean>
-<bean id="taskExecutor"
-  class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
-p:corePoolSize="5"
-p:maxPoolSize="30" />-->		
+<!--__________________________Reader con Paginacion_________________________________ -->
+<!-- <bean id="databaseItemReader" class="org.springframework.batch.item.database.JdbcPagingItemReader" 
+	scope="step"> <property name="dataSource" ref="dataSource" /> <property name="queryProvider"> 
+	<bean class="org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean"> 
+	<property name="dataSource" ref="dataSource" /> <property name="databaseType" 
+	value="MySQL" /> <property name="selectClause" value="SELECT #{jobParameters['select']}" 
+	/> <property name="fromClause" value="FROM #{jobParameters['from']}" /> <property 
+	name="whereClause" value="WHERE #{jobParameters['where']}"/> <property name="sortKey" 
+	value="#{jobParameters['orderBy']}" /> </bean> </property> <property name="pageSize" 
+	value="#{jobParameters['paginacion']}" /> <property name="rowMapper"> <bean 
+	class="es.cic.cmunoz.backend.batching.MapeadoRowMapper" /> </property> </bean> -->
+
+<!-- <bean id="jobLauncher"class="org.springframework.batch.core.launch.support.SimpleJobLauncher"> 
+	<property name="jobRepository" ref="jobRepository" /> <property name="taskExecutor" 
+	ref="taskExecutor" /> </bean> <bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" 
+	p:corePoolSize="5" p:maxPoolSize="30" /> -->		

@@ -15,6 +15,26 @@
  */
 package es.cic.cmunoz.frontend.ventanas.secundarias;
 
+import static org.apache.log4j.Logger.getLogger;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import org.apache.log4j.Logger;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.opencsv.CSVReader;
 import com.vaadin.data.Container;
 import com.vaadin.server.FontAwesome;
@@ -27,44 +47,26 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
-import es.cic.cmunoz.Procesador;
-import es.cic.cmunoz.backend.config.Configuracion;
+
+import es.cic.cmunoz.backend.job.CreadorJobs;
 import es.cic.cmunoz.backend.repository.SqliteRepository;
 import es.cic.cmunoz.frontend.ventanas.modales.ModalBorrar;
 import es.cic.cmunoz.frontend.ventanas.modales.ModalNuevo;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.StringTokenizer;
-import org.apache.log4j.Logger;
-import org.springframework.stereotype.Component;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import static org.apache.log4j.Logger.getLogger;
 
 /**
  * Esta clase gestiona la parte gráfica de la generación de las consultas
  *
  * @author cmunoz
  */
-@Component
 public class GestionConsultas extends VerticalLayout {
 
     private static final Logger LOG = getLogger(GestionConsultas.class.getName());
+    private static final long serialVersionUID = 1L;
 
-    private static final long serialVersionUID = -1233447283545037053L;
+    @Autowired
+    private SqliteRepository repository;
 
-    private final SqliteRepository repository;
-
-    private HashMap<String, String> listaMapasParams;
+    private Map<String, String> listaMapasParams;
 
     private String nombreQuerySeleccionada = "";
 
@@ -80,13 +82,16 @@ public class GestionConsultas extends VerticalLayout {
     private Button botonNuevo;
     private Button botonBorrar;
     private Button botonEjecutar;
+    
+    @Autowired
+	private CreadorJobs crearJobs;
 
     /**
      * Constructor genérico de la clase
      */
     public GestionConsultas() {
-        ApplicationContext contexto = new AnnotationConfigApplicationContext(Configuracion.class);
-        repository = (SqliteRepository) contexto.getBean("repository");
+//        ApplicationContext contexto = new AnnotationConfigApplicationContext(Configuracion.class);
+//        repository = (SqliteRepository) contexto.getBean("repository");
         
         crearBBDD();
         crearPanelSuperior();
@@ -186,7 +191,7 @@ public class GestionConsultas extends VerticalLayout {
     private void crearBotonBorrar() {
         botonBorrar = new Button("Borrar");
         botonBorrar.setIcon(FontAwesome.TRASH);
-        botonBorrar.setEnabled(false);
+        botonBorrar.setEnabled(true);
 
         botonBorrar.addClickListener((Button.ClickEvent e) -> {
 
@@ -210,7 +215,7 @@ public class GestionConsultas extends VerticalLayout {
     private void crearBotonEjecutar() {
         botonEjecutar = new Button("Ejecutar");
         botonEjecutar.setIcon(FontAwesome.PLAY_CIRCLE);
-        botonEjecutar.setEnabled(false);
+        botonEjecutar.setEnabled(true);
 
         botonEjecutar.addClickListener((Button.ClickEvent e) -> {
 
@@ -228,9 +233,19 @@ public class GestionConsultas extends VerticalLayout {
 
             serializarLista();
 
-            String comandoCMD = "java -Djavax.xml.accessExternalSchema=all -jar Main2.jar es.cic.cmunoz.Main2.class";
-            Procesador proc = new Procesador();
-            proc.lanzarEnCMD(comandoCMD);
+            crearJobs.crearJob(listaMapasParams);
+
+            while (true) {
+                try {
+					Thread.sleep(100);
+				} catch (InterruptedException e1) {
+					
+				}
+                if (crearJobs.getActivo() != null) {
+                    LOG.info("Estado Del Job: ".concat(BatchStatus.COMPLETED.toString()));
+                    break;
+                }
+            }
 
             crearNotificacion("Leyendo CSV e imprimiendo en el Area De Resultados");
             LOG.info("Query Ejecutada... Imprimiendo Resultado En Pantalla");
